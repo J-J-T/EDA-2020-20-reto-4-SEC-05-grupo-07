@@ -46,43 +46,47 @@ de creacion y consulta sobre las estructuras de datos.
 def newAnalyzer():
     try:
         citibike={
-            "graph":None
+            "graph":None,
+            "connections":None,
+            "components":None,
+            "paths":None
 
         }
         citibike["graph"] = gr.newGraph(datastructure='ADJ_LIST',
                                   directed=True,
                                   size=1000,
                                   comparefunction=compareStations)
-    
+        citibike['connections'] = gr.newGraph(datastructure='ADJ_LIST',
+                                              directed=True,
+                                              size=14000,
+                                              comparefunction=compareStations)
         return citibike
     except Exception as exp:
         error.reraise(exp, 'model:newAnalyzer')
 
-      def addTrip(citibike, trip,topd,tops,tot):
+
+
+
+def addTrip(citibike, trip):
     """
     """
     origin = trip['start station id']
-    o=trip['start station name']
     destination = trip['end station id']
-    d=trip['end station name']
     duration = int(trip['tripduration'])
     addStation(citibike, origin)
     addStation(citibike, destination)
     addConnection(citibike, origin, destination, duration)
-    if d not in topd:
-        topd[d]=1
-        tot[d]=1
-    else: 
-        topd[d]=(topd[d]+1)
-        tot[d]=(tot[d]+1)
-    if o not in tops:
-        tops[o]=1
-        tot[o]=1
-    else:
-        tops[o]=(tops[o]+1)
-        tot[o]=(tot[o]+1)
-    
-    
+
+def addStop(analyzer, stopid):
+    """
+    Adiciona una estación como un vertice del grafo
+    """
+    try:
+        if not gr.containsVertex(analyzer['connections'], stopid):
+            gr.insertVertex(analyzer['connections'], stopid)
+        return analyzer
+    except Exception as exp:
+        error.reraise(exp, 'model:addstop')
 
 def addStation(citibike, stationid):
     """
@@ -92,13 +96,14 @@ def addStation(citibike, stationid):
             gr.insertVertex(citibike ["graph"], stationid)
     return citibike
 
+
 def addConnection(citibike, origin, destination, duration):
     """
     Adiciona un arco entre dos estaciones
     """
-    edge = gr.getEdge(citibike["graph"], origin, destination)
+    edge = gr.getEdge(citibike["connections"], origin, destination)
     if edge is None:
-        gr.addEdge(citibike["graph"], origin, destination, duration)
+        gr.addEdge(citibike["connections"], origin, destination, duration)
     return citibike
 
 
@@ -111,6 +116,23 @@ def addConnection(citibike, origin, destination, duration):
 # ==============================
 # Funciones Helper
 # ==============================
+def cleanServiceDistance(lastservice, service):
+    """
+    En caso de que el archivo tenga un espacio en la
+    distancia, se reemplaza con cero.
+    """
+    if service['Distance'] == '':
+        service['Distance'] = 0
+    if lastservice['Distance'] == '':
+        lastservice['Distance'] = 0
+def formatVertex(service):
+    """
+    Se formatea el nombrer del vertice con el id de la estación
+    seguido de la ruta.
+    """
+    name = service['BusStopCode'] + '-'
+    name = name + service['ServiceNo']
+    return name
 
 # ==============================
 # Funciones de Comparacion
@@ -136,30 +158,3 @@ def totalStops(citibike):
     """
     return gr.numVertices(citibike["graph"])
 
-def req4(id,tiempo,citibike):
-    total=0
-    respuesta=[]
-    for i in citibike:
-         if total+int(i['tripduration'])<tiempo:
-            total=total+int(i['tripduration'])
-            respuesta.append({'Nombre de estación inicio': i['start station name'], 'Nombre estación final':i['end station name'], 'Duración estimada del segmento':i['tripduration']})
-    return respuesta
-
-
-def req5(rango1,rango2, citibike):
-    dato1=str(2018-rango1)
-    dato2=str(2018-rango2)
-    tiempo=2000
-    estaciones=[]
-    dict={'estacioninicial': '','estacionfinal': '','estaciones':[] }
-    for citibi in citibike:
-        if citibi['birth year']<dato1 and citibi['birth year']>dato2:
-            if citibi['start station name'] not in estaciones :
-                estaciones.append(citibi['end station name'])
-            if int(citibi['tripduration'])<tiempo:
-                tiempo= int(citibi['tripduration'])
-                dict['estacionfinal']= citibi['end station name']
-                dict['estacioninicial']= citibi['start station name']
-    dict['estaciones']=list(set(estaciones))
-
-    return dict
