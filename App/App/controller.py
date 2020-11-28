@@ -28,7 +28,6 @@ import config as cf
 from App import model
 import csv
 import os
-
 """
 El controlador se encarga de mediar entre la vista y el modelo.
 Existen algunas operaciones en las que se necesita invocar
