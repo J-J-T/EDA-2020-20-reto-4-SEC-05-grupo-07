@@ -58,8 +58,9 @@ def newAnalyzer():
     except Exception as exp:
         error.reraise(exp, 'model:newAnalyzer')
 
-def addTrip(citibike, trip,topd,tops,tot):
-
+      def addTrip(citibike, trip,topd,tops,tot):
+    """
+    """
     origin = trip['start station id']
     o=trip['start station name']
     destination = trip['end station id']
